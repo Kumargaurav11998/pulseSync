@@ -1,9 +1,29 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, ViewProps } from 'react-native';
 import { styles } from './Card.styles';
 
-const Card = () => {
-  return <View style={styles.container}></View>;
+interface CardProps extends ViewProps {
+  variant?: 'elevated' | 'flat' | 'outlined';
+}
+
+const Card: React.FC<CardProps> = ({ 
+  children, 
+  style, 
+  variant = 'elevated', 
+  ...props 
+}) => {
+  return (
+    <View 
+      style={[
+        styles.container,
+        styles[variant],
+        style
+      ]} 
+      {...props}
+    >
+      {children}
+    </View>
+  );
 };
 
 export default Card;

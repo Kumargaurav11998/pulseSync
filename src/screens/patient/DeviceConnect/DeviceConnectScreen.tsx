@@ -4,8 +4,11 @@ import BleManager, { Peripheral } from 'react-native-ble-manager';
 import { styles } from './DeviceConnectScreen.styles';
 import { getDeviceHandler } from '../../../services/ble/deviceRegistry';
 import { BleParsedData } from '../../../services/ble/bleDeviceConfig';
+import { useAppDispatch } from '../../../redux/hooks';
+import { setHeartRate, setWeight } from '../../../redux/healthSlice';
 
 const DeviceConnectScreen = () => {
+  const dispatch = useAppDispatch();
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState<Map<string, Peripheral>>(new Map());
   const [connectingId, setConnectingId] = useState<string | null>(null);
@@ -49,6 +52,12 @@ const DeviceConnectScreen = () => {
         const parsed = handler.parseData(data.value);
         if (parsed) {
           setLiveData(parsed);
+          // Redux Integration: Sync received data to the global store
+          if (parsed.type === 'pulse') {
+            dispatch(setHeartRate(parsed.value));
+          } else if (parsed.type === 'weight') {
+            dispatch(setWeight(parsed.value));
+          }
         }
       }
     });
@@ -60,7 +69,7 @@ const DeviceConnectScreen = () => {
       disconnectListener.remove();
       updateValueListener.remove();
     };
-  }, []);
+  }, [dispatch]);
 
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
