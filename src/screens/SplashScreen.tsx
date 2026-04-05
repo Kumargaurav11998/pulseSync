@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, SafeAreaView } from 'react-native';
 import { styles } from './SplashScreen.styles';
+import SQLiteService from '../services/database/SQLiteService';
 
 const SplashScreen = () => {
+  useEffect(() => {
+    SQLiteService.initDB().catch(err => {
+      console.error('Failed to initialize SQLite on Splash:', err);
+    });
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>

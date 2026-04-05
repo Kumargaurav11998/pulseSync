@@ -13,21 +13,23 @@ interface HealthState {
     quality: number;
     status: string;
   };
+  bloodGlucose: number;
 }
 
 const initialState: HealthState = {
-  heartRate: 72,
-  spo2: 98,
-  weight: 72.5,
+  heartRate: 0,
+  spo2: 0,
+  weight: 0,
   steps: {
-    current: 8400,
+    current: 0,
     goal: 10000,
   },
   sleep: {
-    duration: '7h 20m',
-    quality: 92,
-    status: 'Restorative',
+    duration: '0h 0m',
+    quality: 0,
+    status: 'No data',
   },
+  bloodGlucose: 0,
 };
 
 export const healthSlice = createSlice({
@@ -46,8 +48,11 @@ export const healthSlice = createSlice({
     setWeight: (state, action: PayloadAction<number>) => {
       state.weight = action.payload;
     },
+    setBloodGlucose: (state, action: PayloadAction<number>) => {
+      state.bloodGlucose = action.payload;
+    },
   },
 });
 
-export const { setHeartRate, setSpo2, updateSteps, setWeight } = healthSlice.actions;
+export const { setHeartRate, setSpo2, updateSteps, setWeight, setBloodGlucose } = healthSlice.actions;
 export default healthSlice.reducer;

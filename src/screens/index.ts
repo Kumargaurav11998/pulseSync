@@ -4,4 +4,5 @@ export { default as DashboardScreen } from './patient/Dashboard/DashboardScreen'
 export { default as DeviceConnectScreen } from './patient/DeviceConnect/DeviceConnectScreen';
 export { default as HealthDetailScreen } from './patient/HealthDetail/HealthDetailScreen';
 export { default as ProfileScreen } from './patient/Profile/ProfileScreen';
+export { default as DoctorScreen } from './patient/Doctor/DoctorScreen';
 export { default as LoginScreen } from './auth/Login/LoginScreen';

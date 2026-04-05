@@ -1,4 +1,14 @@
-export type BleDeviceType = 'weight' | 'pulse' | 'spo2' | 'unknown';
+export enum HealthMetric {
+  HEART_RATE = 'heart_rate',
+  SPO2 = 'spo2',
+  WEIGHT = 'weight',
+  STEPS = 'steps',
+  SLEEP = 'sleep',
+  BLOOD_GLUCOSE = 'blood_glucose',
+  UNKNOWN = 'unknown'
+}
+
+export type BleDeviceType = HealthMetric;
 
 export interface BleParsedData {
   type: BleDeviceType;

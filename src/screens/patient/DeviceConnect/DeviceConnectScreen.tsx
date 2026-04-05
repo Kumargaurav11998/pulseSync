@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Platform, PermissionsAndroid } from 'react-native';
 import BleManager, { Peripheral } from 'react-native-ble-manager';
 import { styles } from './DeviceConnectScreen.styles';
 import { getDeviceHandler } from '../../../services/ble/deviceRegistry';
 import { BleParsedData } from '../../../services/ble/bleDeviceConfig';
+import BleService from '../../../services/ble/BleService';
 import { useAppDispatch } from '../../../redux/hooks';
-import { setHeartRate, setWeight } from '../../../redux/healthSlice';
 
 const DeviceConnectScreen = () => {
   const dispatch = useAppDispatch();
@@ -14,10 +14,30 @@ const DeviceConnectScreen = () => {
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [connectedId, setConnectedId] = useState<string | null>(null);
   const [liveData, setLiveData] = useState<BleParsedData | null>(null);
-  const connectedDeviceNameRef = useRef<string | null>(null);
 
   useEffect(() => {
-    BleManager.start({ showAlert: false }).catch(err => console.warn(err));
+    // Initial BleService setup with the redux dispatch
+    BleService.init(dispatch);
+
+    // Initial check for already connected devices
+    const alreadyConnected = BleService.getConnectedDevices();
+    if (alreadyConnected.size > 0) {
+      alreadyConnected.forEach((name, id) => {
+        setPeripherals(prev => {
+          const newMap = new Map(prev);
+          if (!newMap.has(id)) {
+            newMap.set(id, {
+              id,
+              name,
+              rssi: -50, // Mock strong RSSI for connected devices
+              advertising: {},
+            } as any);
+          }
+          return newMap;
+        });
+        setConnectedId(id);
+      });
+    }
 
     const discoverListener = BleManager.onDiscoverPeripheral((peripheral: Peripheral) => {
       setPeripherals(prev => {
@@ -34,42 +54,27 @@ const DeviceConnectScreen = () => {
       setIsScanning(false);
     });
 
-    const connectListener = BleManager.onConnectPeripheral((data) => {
-      console.log('Bluetooth connection established with peripheral:', data.peripheral);
-    });
-
     const disconnectListener = BleManager.onDisconnectPeripheral((data) => {
-      console.log('Bluetooth disconnected from peripheral:', data.peripheral);
       setConnectedId(prev => (prev === data.peripheral ? null : prev));
       setLiveData(null);
-      connectedDeviceNameRef.current = null;
     });
 
     const updateValueListener = BleManager.onDidUpdateValueForCharacteristic((data) => {
-      // Use ref to break stale closure in useEffect
-      const handler = getDeviceHandler(connectedDeviceNameRef.current);
+      const deviceName = peripherals.get(data.peripheral)?.name;
+      const handler = getDeviceHandler(deviceName);
       if (handler) {
-        const parsed = handler.parseData(data.value);
-        if (parsed) {
-          setLiveData(parsed);
-          // Redux Integration: Sync received data to the global store
-          if (parsed.type === 'pulse') {
-            dispatch(setHeartRate(parsed.value));
-          } else if (parsed.type === 'weight') {
-            dispatch(setWeight(parsed.value));
-          }
-        }
+         const parsed = handler.parseData(data.value);
+         if (parsed) setLiveData(parsed);
       }
     });
 
     return () => {
       discoverListener.remove();
       stopListener.remove();
-      connectListener.remove();
       disconnectListener.remove();
       updateValueListener.remove();
     };
-  }, [dispatch]);
+  }, [dispatch, peripherals]);
 
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
@@ -94,7 +99,6 @@ const DeviceConnectScreen = () => {
           await BleManager.enableBluetooth();
         }
         await BleManager.scan({ seconds: 5, allowDuplicates: false });
-        console.log("Scan started");
         setIsScanning(true);
       } catch (err) {
         console.warn('Scan failed', err);
@@ -109,25 +113,16 @@ const DeviceConnectScreen = () => {
         setIsScanning(false);
       }
       setConnectingId(id);
-      await BleManager.connect(id);
-      console.log('Connected to', id);
       
-      // Retrieve services before read/write operations as per documentation
-      await BleManager.retrieveServices(id);
-      console.log('Services retrieved for', id);
+      const peripheral = peripherals.get(id);
+      const deviceName = peripheral?.name || 'Unknown Device';
       
-      const deviceName = peripherals.get(id)?.name;
-      const handler = getDeviceHandler(deviceName);
+      const success = await BleService.connectDevice(id, deviceName);
       
-      if (handler) {
-        await BleManager.startNotification(id, handler.serviceUUID, handler.notifyCharacteristicUUID);
-        console.log(`Started listening to ${deviceName} via handler!`);
-        connectedDeviceNameRef.current = deviceName ?? null;
-      } else {
-        console.warn(`Connected to ${id}, but no configured handler found for ${deviceName}.`);
+      if (success) {
+        setConnectedId(id);
+        console.log(`Manual connection to ${deviceName} successful!`);
       }
-      
-      setConnectedId(id);
     } catch (error) {
       console.warn('Connection failed', error);
     } finally {
@@ -139,7 +134,6 @@ const DeviceConnectScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* TopAppBar */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity>
@@ -153,7 +147,6 @@ const DeviceConnectScreen = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Scanning Status Section */}
         <View style={styles.statusSection}>
           <View style={styles.radarContainer}>
             <View style={styles.radarInner}>
@@ -171,7 +164,6 @@ const DeviceConnectScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Devices List */}
         <View style={styles.devicesList}>
           {devices.map((device) => (
             <View key={device.id} style={styles.deviceCard}>
@@ -209,11 +201,10 @@ const DeviceConnectScreen = () => {
             </View>
           ))}
           {devices.length === 0 && !isScanning && (
-            <Text style={{ textAlign: 'center', marginTop: 20 }}>No devices found</Text>
+            <Text style={styles.noDevices}>No devices found</Text>
           )}
         </View>
 
-        {/* Help Card */}
         <View style={styles.helpCard}>
           <View style={styles.helpIconContainer}>
             <Text>💡</Text>
