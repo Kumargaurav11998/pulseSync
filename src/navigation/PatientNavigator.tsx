@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useStepCounter } from '../hooks/useStepCounter';
+import { useSleepTracker } from '../hooks/useSleepTracker';
 import { PatientStackParamList, PatientTabParamList } from './Types';
 import { 
   DashboardScreen, 
@@ -12,14 +13,27 @@ import {
   DoctorScreen
 } from '../screens';
 import { colors } from '../theme';
+import { Icon } from '../components';
 
 const Tab = createBottomTabNavigator<PatientTabParamList>();
 const Stack = createNativeStackNavigator<PatientStackParamList>();
 
+const getTabBarIcon = (route: any) => ({ color, size }: { color: string; size: number }) => {
+  let iconName = 'view-dashboard';
+  if (route.name === 'Dashboard') {
+    iconName = 'view-dashboard';
+  } else if (route.name === 'Doctor') {
+    iconName = 'doctor';
+  } else if (route.name === 'Profile') {
+    iconName = 'account';
+  }
+  return <Icon name={iconName} size={size} color={color} />;
+};
+
 const TabNavigator = () => {
   return (
     <Tab.Navigator 
-      screenOptions={{ 
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
@@ -33,8 +47,9 @@ const TabNavigator = () => {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
-        }
-      }}
+        },
+        tabBarIcon: getTabBarIcon(route),
+      })}
     >
       <Tab.Screen 
         name="Dashboard" 
@@ -57,6 +72,7 @@ const TabNavigator = () => {
 
 const PatientNavigator = () => {
   useStepCounter();
+  useSleepTracker();
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

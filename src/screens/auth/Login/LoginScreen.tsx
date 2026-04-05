@@ -9,13 +9,16 @@ import {
 } from 'react-native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from './LoginScreen.styles';
 import { AppText, Button } from '../../../components';
 import AuthInput from '../../../components/common/AuthInput';
 import { colors } from '../../../theme';
+import SQLiteService from '../../../services/database/SQLiteService';
+import { useAppDispatch } from '../../../redux/hooks';
+import { setUser } from '../../../redux/authSlice';
 
 const LoginScreen = () => {
+  const dispatch = useAppDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,11 +38,16 @@ const LoginScreen = () => {
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
-        loginType: 'google',
         lastLogin: new Date().toISOString(),
       };
-      await AsyncStorage.setItem('@user_profile', JSON.stringify(userData));
-      console.log('User data saved to AsyncStorage');
+      
+      // Save to SQLite
+      await SQLiteService.saveUser(userData);
+      
+      // Update Redux state
+      dispatch(setUser(userData));
+      
+      console.log('User data saved to SQLite and Redux');
     } catch (error) {
       console.error('Error saving user data', error);
     }

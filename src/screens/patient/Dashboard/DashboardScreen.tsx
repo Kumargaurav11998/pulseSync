@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, SafeAreaView } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import { AppText, Card, Header } from '../../../components';
+import { AppText, Card, Header, Icon } from '../../../components';
 import { styles } from './DashboardScreen.styles';
 import { colors } from '../../../theme';
 import { useAppSelector } from '../../../redux/hooks';
@@ -12,6 +12,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PatientStackParamList } from '../../../navigation/Types';
 import StepCounterCard from '../../../components/Dashboard/StepCounterCard';
 import SyncDeviceCard from '../../../components/Dashboard/SyncDeviceCard';
+import WeeklyInsights from '../../../components/Dashboard/WeeklyInsights';
 import SQLiteService, { VitalRecord } from '../../../services/database/SQLiteService';
 import { HealthMetric } from '../../../services/ble/bleDeviceConfig';
 
@@ -20,6 +21,7 @@ const DashboardScreen = () => {
   const { heartRate, spo2, weight, steps, sleep } = useAppSelector((state) => state.health);
   const user = useAppSelector((state) => state.auth.user);
   const [weightHistory, setWeightHistory] = useState<any[]>([]);
+  const [weightTrend, setWeightTrend] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWeightHistory();
@@ -29,17 +31,30 @@ const DashboardScreen = () => {
     try {
       const history = await SQLiteService.getHistory(HealthMetric.WEIGHT, 7);
       if (history.length > 0) {
-        const today = new Date().toDateString();
-        // Transform for LineChart (oldest to newest)
-        const chartData = history.reverse().map((record: VitalRecord) => {
-          const date = new Date(record.timestamp);
-          const isToday = date.toDateString() === today;
+        
+        // Calculate weight trend if we have at least 2 records from different days
+        if (history.length >= 2) {
+          const latestRecord = history[0];
+          const oldestRecord = history[history.length - 1];
+          const latestDate = new Date(latestRecord.timestamp).toDateString();
+          const oldestDate = new Date(oldestRecord.timestamp).toDateString();
           
+          if (latestDate !== oldestDate) {
+            const diff = Number(latestRecord.value) - Number(oldestRecord.value);
+            let trendIcon = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+            let trendText = `${trendIcon} ${diff > 0 ? '+' : ''}${diff.toFixed(1)} kg this week`;
+            setWeightTrend(trendText);
+          } else {
+            setWeightTrend(null);
+          }
+        } else {
+          setWeightTrend(null);
+        }
+
+        // Transform for LineChart (oldest to newest)
+        const chartData = [...history].reverse().map((record: VitalRecord) => {
           return {
             value: Number(record.value),
-            label: isToday 
-              ? `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
-              : date.getDate().toString(),
           };
         });
         setWeightHistory(chartData);
@@ -47,6 +62,21 @@ const DashboardScreen = () => {
     } catch (error) {
       console.error('Error fetching weight history:', error);
     }
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning,';
+    if (hour < 17) return 'Good Afternoon,';
+    if (hour < 21) return 'Good Evening,';
+    return 'Good Night,';
+  };
+
+  const getCurrentDate = () => {
+    const d = new Date();
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
   };
 
   return (
@@ -57,10 +87,10 @@ const DashboardScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <AppText variant="h2" style={styles.greetingHeader}>
-          {DASHBOARD_STRINGS.GREETING} <AppText variant="h2" bold>{user?.name || 'User'}</AppText>
+          {getGreeting()} <AppText variant="h2" bold>{user?.displayName?.split(' ')[0] || 'User'}</AppText>
         </AppText>
         <AppText variant="subtext" style={styles.dateText}>
-          Sunday, April 5
+          {getCurrentDate()}
         </AppText>
 
         {/* Heart Rate Card */}
@@ -82,12 +112,13 @@ const DashboardScreen = () => {
               initialSpacing={0}
               color1={colors.primary}
               thickness={3}
-              hideDataPoints
-              hideRules
-              hideYAxisText
-              hideAxesAndRules
-              curved
-              areaChart
+              hideDataPoints={true}
+              hideRules={true}
+              hideYAxisText={true}
+              hideAxesAndRules={true}
+              curved={true}
+              areaChart={true}
+              focusEnabled={false}
               startOpacity={0.2}
               endOpacity={0}
               color={colors.primary}
@@ -126,14 +157,16 @@ const DashboardScreen = () => {
         {/* Weight Card (Refactored to match screenshot) */}
         <Card style={styles.weightCardFull}>
           <View style={styles.weightHeader}>
-             <View style={styles.weightIconContainer}>
-                <AppText style={styles.weightIconText}>⚖</AppText>
-             </View>
-             <View style={styles.weightTitleContainer}>
+              <View style={styles.weightIconContainer}>
+                <Icon name="scale-bathroom" size={24} color={colors.primary} />
+              </View>
+              <View style={styles.weightTitleContainer}>
                 <AppText variant="headline" style={styles.cardTitle}>{DASHBOARD_STRINGS.WEIGHT}</AppText>
-                <View style={styles.weightTrendPill}>
-                   <AppText variant="tiny" style={styles.weightTrendText}>{DASHBOARD_STRINGS.WEIGHT_TREND}</AppText>
-                </View>
+                {weightTrend && (
+                   <View style={styles.weightTrendPill}>
+                      <AppText variant="tiny" style={styles.weightTrendText}>{weightTrend}</AppText>
+                   </View>
+                )}
              </View>
           </View>
 
@@ -148,19 +181,20 @@ const DashboardScreen = () => {
             
             <View style={styles.weightChartContainer}>
                <LineChart
-                  data={weightHistory.length > 0 ? weightHistory : [{value: 0, label: ''}, {value: 0, label: ''}]}
+                  data={weightHistory.length > 0 ? weightHistory : [{value: 0}, {value: 0}]}
                   height={60}
                   width={150}
                   initialSpacing={0}
-                  color={colors.secondary}
+                  color={colors.primary}
                   thickness={3}
-                  hideDataPoints
-                  hideRules
-                  hideYAxisText
-                  hideAxesAndRules
-                  curved
-                  areaChart
-                  startFillColor={colors.secondary}
+                  hideDataPoints={true}
+                  hideRules={true}
+                  hideYAxisText={true}
+                  hideAxesAndRules={true}
+                  curved={true}
+                  areaChart={true}
+                  focusEnabled={false}
+                  startFillColor={colors.primary}
                   endFillColor={colors.background}
                   startOpacity={0.1}
                   endOpacity={0}
@@ -171,6 +205,9 @@ const DashboardScreen = () => {
 
         {/* Steps Card */}
         <StepCounterCard currentSteps={steps.current} goalSteps={steps.goal} />
+
+        {/* Weekly Insights / Quotes Carousel */}
+        <WeeklyInsights />
 
         {/* New Sync Device Card */}
         <SyncDeviceCard 

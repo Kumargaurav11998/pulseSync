@@ -1,36 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, ScrollView, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import { AppText, Header, Card } from '../../../components';
 import { spacing, colors } from '../../../theme';
 import { styles } from './ProfileScreen.styles';
+import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
+import { logout } from '../../../redux/authSlice';
+import SQLiteService from '../../../services/database/SQLiteService';
+import auth from '@react-native-firebase/auth';
 
-interface UserProfile {
-  displayName: string;
-  email: string;
-  photoURL?: string;
-}
 
 const ProfileScreen = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const savedProfile = await AsyncStorage.getItem('@user_profile');
-        if (savedProfile) {
-          setProfile(JSON.parse(savedProfile));
-        }
-      } catch (error) {
-        console.error('Error fetching profile', error);
-      }
-    };
-    fetchProfile();
-  }, []);
-
-  const getInitials = (name: string) => {
-    if (!name) return '??';
+  const getInitials = (name: string | null) => {
+    if (!name) return 'PS';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Sign out from Firebase
+              await auth().signOut();
+              
+              // Clear SQLite
+              await SQLiteService.clearUserData();
+              
+              // Update Redux
+              dispatch(logout());
+              
+              console.log("Logged out successfully");
+            } catch (error) {
+              console.error("Logout error", error);
+              Alert.alert("Error", "Failed to logout. Please try again.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -40,14 +55,14 @@ const ProfileScreen = () => {
         <View style={styles.profileHeader}>
           <View style={styles.avatarLarge}>
             <AppText style={styles.avatarLargeText}>
-              {profile ? getInitials(profile.displayName) : 'PS'}
+              {user ? getInitials(user.displayName) : 'PS'}
             </AppText>
           </View>
           <AppText variant="h2" bold style={styles.userName}>
-            {profile?.displayName || 'PulseSync User'}
+            {user?.displayName || 'PulseSync User'}
           </AppText>
           <AppText variant="subtext" style={styles.userEmail}>
-            {profile?.email || 'user@example.com'}
+            {user?.email || 'user@example.com'}
           </AppText>
         </View>
 
@@ -80,7 +95,7 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <AppText style={styles.logoutText}>Logout</AppText>
         </TouchableOpacity>
       </ScrollView>

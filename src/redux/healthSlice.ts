@@ -51,8 +51,11 @@ export const healthSlice = createSlice({
     setBloodGlucose: (state, action: PayloadAction<number>) => {
       state.bloodGlucose = action.payload;
     },
+    updateSleep: (state, action: PayloadAction<{ duration: string, quality: number, status: string }>) => {
+      state.sleep = action.payload;
+    },
   },
 });
 
-export const { setHeartRate, setSpo2, updateSteps, setWeight, setBloodGlucose } = healthSlice.actions;
+export const { setHeartRate, setSpo2, updateSteps, setWeight, setBloodGlucose, updateSleep } = healthSlice.actions;
 export default healthSlice.reducer;

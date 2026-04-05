@@ -146,7 +146,7 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: colors.secondary + '30',
+    backgroundColor: colors.primary + '15', // Subtle primary background
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.s,

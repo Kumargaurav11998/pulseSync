@@ -11,8 +11,12 @@ class BleService {
   private lastWeightTime: number = 0;
   private lastWeightValue: number = 0;
   private weightSaveTimeout: any = null;
+  private isInitialized: boolean = false;
 
   init(dispatch: AppDispatch) {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+    
     this.dispatch = dispatch;
     
     // Start BleManager

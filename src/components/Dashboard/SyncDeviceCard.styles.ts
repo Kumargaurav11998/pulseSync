@@ -23,10 +23,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.m,
   },
-  iconText: {
-    fontSize: 28,
-    color: colors.primary,
-  },
   title: {
     marginBottom: spacing.s,
     color: colors.textPrimary,

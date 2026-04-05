@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { AppText, Card } from '../index';
+import { AppText, Card, Icon } from '../index';
 import { styles } from './SyncDeviceCard.styles';
 import { colors } from '../../theme';
 
@@ -13,7 +13,7 @@ const SyncDeviceCard: React.FC<SyncDeviceCardProps> = ({ onPress }) => {
   return (
     <Card style={styles.card}>
       <View style={styles.iconContainer}>
-         <AppText style={styles.iconText}>ᛒ</AppText>
+         <Icon name="bluetooth" size={32} color={colors.primary} />
       </View>
       
       <AppText variant="h2" bold style={styles.title}>Sync New Device</AppText>

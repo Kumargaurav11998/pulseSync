@@ -59,13 +59,102 @@ class SQLiteService {
       );`,
       `CREATE INDEX IF NOT EXISTS idx_vital_type ON vitals(type);`,
       `CREATE INDEX IF NOT EXISTS idx_vital_timestamp ON vitals(timestamp);`,
-      `CREATE INDEX IF NOT EXISTS idx_device_last_connected ON devices(last_connected);`
+      `CREATE INDEX IF NOT EXISTS idx_device_last_connected ON devices(last_connected);`,
+      `CREATE TABLE IF NOT EXISTS users (
+        uid TEXT PRIMARY KEY,
+        displayName TEXT,
+        email TEXT,
+        photoURL TEXT,
+        lastLogin DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS quotes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        quote TEXT NOT NULL,
+        author TEXT,
+        category TEXT
+      );`
     ];
 
     for (const query of queries) {
       await this.db.executeSql(query);
     }
     console.log("Tables created successfully");
+  }
+
+  // Quote Management
+  async saveQuote(quote: string, author: string, category: string) {
+    const db = await this.initDB();
+    const query = `INSERT INTO quotes (quote, author, category) VALUES (?, ?, ?)`;
+    try {
+      await db.executeSql(query, [quote, author, category]);
+    } catch (error) {
+      console.error('Error saving quote', error);
+    }
+  }
+
+  async getQuotes(limit: number = 10) {
+    const db = await this.initDB();
+    const query = `SELECT * FROM quotes ORDER BY RANDOM() LIMIT ?`;
+    try {
+      const [results] = await db.executeSql(query, [limit]);
+      const quotes = [];
+      for (let i = 0; i < results.rows.length; i++) {
+        quotes.push(results.rows.item(i));
+      }
+      return quotes;
+    } catch (error) {
+      console.error('Error fetching quotes', error);
+      return [];
+    }
+  }
+
+  async getQuoteCount() {
+    const db = await this.initDB();
+    const query = `SELECT COUNT(*) as count FROM quotes`;
+    try {
+      const [results] = await db.executeSql(query);
+      return results.rows.item(0).count;
+    } catch (error) {
+      console.error('Error getting quote count', error);
+      return 0;
+    }
+  }
+
+  // User Management
+  async saveUser(user: { uid: string, displayName?: string | null, email?: string | null, photoURL?: string | null }) {
+    const db = await this.initDB();
+    const query = `INSERT OR REPLACE INTO users (uid, displayName, email, photoURL, lastLogin) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+    try {
+      await db.executeSql(query, [user.uid, user.displayName, user.email, user.photoURL]);
+      console.log(`User profile saved to SQLite: ${user.displayName} (${user.uid})`);
+    } catch (error) {
+      console.error('Error saving user profile', error);
+    }
+  }
+
+  async getUser() {
+    const db = await this.initDB();
+    const query = "SELECT * FROM users LIMIT 1";
+    try {
+      const [results] = await db.executeSql(query);
+      if (results.rows.length > 0) {
+        return results.rows.item(0);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user', error);
+      return null;
+    }
+  }
+
+  async clearUserData() {
+    const db = await this.initDB();
+    try {
+      await db.executeSql("DELETE FROM users");
+      console.log("User data cleared from SQLite");
+    } catch (error) {
+      console.error('Error clearing user data', error);
+    }
   }
 
   // Device Management
@@ -152,6 +241,20 @@ class SQLiteService {
        console.error("Error fetching all history", error);
        return [];
      }
+  }
+
+  async getTodayTotal(type: HealthMetric): Promise<number> {
+    const db = await this.initDB();
+    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+    const query = "SELECT SUM(CAST(value as REAL)) as total FROM vitals WHERE type = ? AND timestamp LIKE ?";
+    try {
+      const [results] = await db.executeSql(query, [type, `${today}%`]);
+      const total = results.rows.item(0).total || 0;
+      return total;
+    } catch (e) {
+      console.error(`Error getting today total for ${type}`, e);
+      return 0;
+    }
   }
 
   async clearHistory(type?: string) {

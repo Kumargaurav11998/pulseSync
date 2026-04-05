@@ -37,6 +37,7 @@ export const useStepCounter = () => {
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
+      console.error(e);
       // Non-critical – don't crash
     }
   };

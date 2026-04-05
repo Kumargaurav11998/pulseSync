@@ -1,42 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 import { RootStackParamList } from './Types';
 import AuthNavigator from './AuthNavigator';
 import PatientNavigator from './PatientNavigator';
 import { SplashScreen } from '../screens';
+import QuoteService from '../services/quotes/QuoteService';
 
-import { useAppDispatch } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import BleService from '../services/ble/BleService';
+import SQLiteService from '../services/database/SQLiteService';
+import { setUser as setReduxUser } from '../redux/authSlice';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
   const dispatch = useAppDispatch();
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
-
-  // Handle user state changes
-  function onAuthStateChanged(firebaseUser: FirebaseAuthTypes.User | null) {
-    setUser(firebaseUser);
-    if (initializing) setInitializing(false);
-  }
+  const [loading, setLoading] = useState(true);
+  
+  // Use Redux user as the source of truth for navigation
+  const user = useAppSelector(state => state.auth.user);
 
   useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber; // unsubscribe on unmount
-  }, []);
+    let unsubscribe: () => void;
+
+    const initAuth = async () => {
+      try {
+        // Fetch and cache quotes for insights carousel
+        QuoteService.fetchAndStoreQuotes();
+
+        // 1. Try to load user from SQLite for immediate state
+        const savedUser = await SQLiteService.getUser();
+        if (savedUser && !user) {
+          dispatch(setReduxUser(savedUser));
+        }
+      } catch (error) {
+        console.error("Error loading saved user from SQLite", error);
+      } finally {
+        // 2. Subscribe to Firebase Auth changes
+        unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
+          if (firebaseUser) {
+            // Sync Firebase user with SQLite and Redux
+            const userData = {
+               uid: firebaseUser.uid,
+               displayName: firebaseUser.displayName,
+               email: firebaseUser.email,
+               photoURL: firebaseUser.photoURL,
+               lastLogin: new Date().toISOString()
+            };
+            await SQLiteService.saveUser(userData);
+            dispatch(setReduxUser(userData));
+          }
+          setLoading(false);
+        });
+      }
+    };
+
+    initAuth();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]); // Removed 'user' to prevent infinite loop
 
   // Initialize BLE Service and Auto-Connect when user is authenticated
   useEffect(() => {
-    if (!initializing && user) {
+    if (!loading && user) {
       BleService.init(dispatch);
       BleService.autoConnect();
     }
-  }, [initializing, user, dispatch]);
+  }, [loading, user, dispatch]);
 
-  if (initializing) {
+  if (loading && !user) {
     return <SplashScreen />;
   }
 

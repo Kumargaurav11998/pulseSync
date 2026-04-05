@@ -34,5 +34,10 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      
+      <!-- Sleep API Broadcast Receiver -->
+      <receiver 
+        android:name=".sleep.SleepReceiver" 
+        android:exported="true" />
     </application>
 </manifest>

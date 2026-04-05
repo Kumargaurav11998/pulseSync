@@ -1,8 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface User {
-  name: string;
-  isProfileComplete: boolean;
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  lastLogin?: string;
 }
 
 interface AuthState {
@@ -11,11 +14,8 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  user: {
-    name: 'Gaurav',
-    isProfileComplete: true,
-  },
-  isAuthenticated: true,
+  user: null,
+  isAuthenticated: false,
 };
 
 export const authSlice = createSlice({
