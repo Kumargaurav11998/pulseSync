@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useStepCounter } from '../hooks/useStepCounter';
 import { PatientStackParamList, PatientTabParamList } from './Types';
 import { 
   DashboardScreen, 
@@ -55,6 +56,8 @@ const TabNavigator = () => {
 };
 
 const PatientNavigator = () => {
+  useStepCounter();
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={TabNavigator} />

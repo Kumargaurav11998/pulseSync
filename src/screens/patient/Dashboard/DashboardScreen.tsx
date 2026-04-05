@@ -10,6 +10,7 @@ import { PULSE_DATA, DASHBOARD_STRINGS } from './Dashboard.constants';
 
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PatientStackParamList } from '../../../navigation/Types';
+import StepCounterCard from '../../../components/Dashboard/StepCounterCard';
 import SyncDeviceCard from '../../../components/Dashboard/SyncDeviceCard';
 import SQLiteService, { VitalRecord } from '../../../services/database/SQLiteService';
 import { HealthMetric } from '../../../services/ble/bleDeviceConfig';
@@ -169,24 +170,7 @@ const DashboardScreen = () => {
         </Card>
 
         {/* Steps Card */}
-        <Card style={styles.stepsCard}>
-          <AppText variant="headline" style={styles.cardTitle}>{DASHBOARD_STRINGS.STEPS}</AppText>
-          <View style={styles.stepsContainer}>
-            <View style={styles.stepsTextContainer}>
-              <AppText variant="h2" bold>{steps.current === 0 ? '--' : steps.current.toLocaleString()}</AppText>
-              <AppText variant="subtext">/ {steps.goal.toLocaleString()} steps</AppText>
-            </View>
-            {/* Progress Bar */}
-            <View style={styles.progressBarBackground}>
-              <View 
-                style={[
-                  styles.progressBarFill, 
-                  { width: `${(steps.current / steps.goal) * 100}%` }
-                ]} 
-              />
-            </View>
-          </View>
-        </Card>
+        <StepCounterCard currentSteps={steps.current} goalSteps={steps.goal} />
 
         {/* New Sync Device Card */}
         <SyncDeviceCard 
