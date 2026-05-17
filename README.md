@@ -1,97 +1,183 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+PulseSync ❤️📡
 
-# Getting Started
+A real-time remote patient monitoring mobile application built with React Native.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+PulseSync connects wearable devices via Bluetooth Low Energy (BLE) and streams patient health data such as heart rate, SpO2, and sleep analytics in real time. The application is designed with scalable architecture, reusable components, and Firebase integration to support future doctor dashboards, alerts, and WebRTC consultations.
 
-## Step 1: Start Metro
+🚀 Features
+✅ Patient Module
+BLE wearable device connection
+Real-time heart rate monitoring
+Health dashboard with live graphs
+SpO2 monitoring
+Sleep analytics
+Alerts screen
+Profile management
+🔥 Upcoming Features
+Doctor dashboard
+Multi-patient monitoring
+Firebase real-time sync
+Push notifications
+WebRTC doctor consultation
+AI-based health alerts
+Offline sync support
+🧠 Tech Stack
+📱 Mobile
+React Native
+TypeScript
+Redux Toolkit
+React Navigation
+React Native BLE PLX
+Firebase
+React Native Gifted Charts
+🔧 Architecture
+Modular feature-based structure
+Reusable component system
+Centralized theme management
+Clean separation of UI, logic, and services
+📁 Project Structure
+src/
+ ├── navigation/
+ │
+ ├── screens/
+ │    ├── patient/
+ │    ├── doctor/
+ │    ├── auth/
+ │
+ ├── components/
+ │
+ ├── redux/
+ │
+ ├── services/
+ │    ├── bluetooth/
+ │    ├── firebase/
+ │
+ ├── utils/
+ │
+ ├── theme/
+ │
+ ├── types/
+🎨 Design System
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+PulseSync uses a centralized theme system for:
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+Colors
+Typography
+Spacing
+Reusable UI components
+🎨 Brand Colors
+Type	Color
+Primary	#1DA1F2
+Secondary	#6C2BD9
+Background	#F8FAFC
+Success	#00C9A7
+Danger	#EF4444
+📡 BLE Integration
 
-```sh
-# Using npm
-npm start
+PulseSync uses:
 
-# OR using Yarn
-yarn start
-```
+react-native-ble-plx
 
-## Step 2: Build and run your app
+for:
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Device scanning
+BLE connection
+Real-time heart rate monitoring
+Characteristic subscriptions
+🔄 Real-Time Data Flow
+Wearable Device
+      ↓
+Bluetooth (BLE)
+      ↓
+React Native App
+      ↓
+Redux Store
+      ↓
+Firebase
+      ↓
+Doctor Dashboard (Future)
+🏗️ Architecture Principles
+✅ Reusable Components
 
-### Android
+Shared UI components:
 
-```sh
-# Using npm
+AppText
+Card
+Button
+Header
+✅ Modular Design
+
+Features are separated into:
+
+Patient
+Doctor
+Auth
+✅ Single Responsibility
+
+Each file/component has one clear responsibility.
+
+📊 Core Modules
+Patient Dashboard
+Live heart rate
+Graph visualization
+Device status
+Device Connection
+Scan BLE devices
+Connect wearable
+Start monitoring
+Alerts
+High heart rate
+Low oxygen level
+🔐 Authentication
+
+Firebase Authentication:
+
+Email/password login
+Future role-based login:
+Patient
+Doctor
+📦 Installation
+Clone Project
+git clone <repo-url>
+Install Dependencies
+npm install
+iOS Setup
+cd ios && pod install
+▶️ Run Project
+Android
 npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+iOS
 npm run ios
+🔥 Development Rules
+✅ Reuse Existing Components
 
-# OR using Yarn
-yarn ios
-```
+Always check existing components before creating new ones.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+✅ No Hardcoded Styling
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+Use:
 
-## Step 3: Modify your app
+theme.colors
+theme.spacing
+theme.typography
+✅ Keep Files Small
+Modular
+Reusable
+Easy to maintain
+🎯 Project Goal
 
-Now that you have successfully run the app, let's make changes!
+PulseSync aims to provide:
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+Affordable remote patient monitoring
+Real-time wearable integration
+Scalable healthcare infrastructure
+Mobile-first healthcare accessibility
+🚀 Future Vision
+Doctor web dashboard
+WebRTC video consultation
+AI-based health predictions
+Multi-device wearable support
+Cloud analytics
+👨‍💻 Author
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Built with ❤️ using React Native and BLE technology.
