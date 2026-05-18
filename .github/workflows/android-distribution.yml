@@ -25,6 +25,9 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
+      - name: Replace jcenter in node_modules
+        run: find node_modules -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
